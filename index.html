@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Factoriser avec a² − b²</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+/* Mise en page : visualisation à gauche, question puis rédaction à droite ; une colonne sur téléphone. */
+:root{
+  --bg:#f2f5f9; --panel:#ffffff; --ink:#16233b; --muted:#5b6880; --line:#d5dce8;
+  --accent:#2350c4; --accent-soft:#e3eafb;
+  --a:#0a7f72; --a-soft:#dff3f0; --b:#c2500f; --b-soft:#fbeadf;
+  --good:#1b7f3b; --good-soft:#e2f4e7; --bad:#b3261e; --bad-soft:#fbe6e4;
+  --ui:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --math:"STIX Two Text","Cambria Math",Cambria,Georgia,serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#111724; --panel:#1a2233; --ink:#e8edf6; --muted:#9ba8be; --line:#33405a;
+    --accent:#86a6ff; --accent-soft:#24335a;
+    --a:#4fd0bf; --a-soft:#173a37; --b:#ff9a5c; --b-soft:#43291a;
+    --good:#6fd08a; --good-soft:#1c3a27; --bad:#ff8f86; --bad-soft:#47221f;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111724; --panel:#1a2233; --ink:#e8edf6; --muted:#9ba8be; --line:#33405a;
+  --accent:#86a6ff; --accent-soft:#24335a;
+  --a:#4fd0bf; --a-soft:#173a37; --b:#ff9a5c; --b-soft:#43291a;
+  --good:#6fd08a; --good-soft:#1c3a27; --bad:#ff8f86; --bad-soft:#47221f;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:18px;line-height:1.45}
+.wrap{max-width:1160px;margin:0 auto;padding:20px 16px 40px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+h1{font-size:1.35rem;margin:0;font-weight:700;text-wrap:balance}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{font:inherit;font-size:.95rem;font-weight:600;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:999px;padding:6px 14px;cursor:pointer}
+.tab .m{font-style:italic}
+.tab[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.tab.done:not([aria-current="true"]){border-color:var(--good);color:var(--good)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.right{display:flex;flex-direction:column;gap:16px}
+.card h2{font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 12px;font-weight:700}
+
+/* maths */
+.m{font-family:var(--math);font-weight:400}
+.it{font-style:italic}
+sup{font-size:.62em;line-height:0;position:relative;top:-.15em}
+.frac{display:inline-flex;flex-direction:column;text-align:center;vertical-align:middle;line-height:1.1;margin:0 .12em;font-size:.86em}
+.frac>span:first-child{border-bottom:1.4px solid currentColor;padding:0 .22em .03em}
+.frac>span:last-child{padding:.03em .22em 0}
+.bp{display:inline-block;transform:scaleY(1.9);margin:0 .03em}
+
+/* visualisation */
+.viz{display:flex;flex-direction:column;gap:22px}
+.expr{font-family:var(--math);font-size:1.75rem;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:.35em;padding:8px 0 4px}
+.expr .nm{padding-top:.38em}
+.expr .op{padding-top:.38em}
+.sq{display:inline-flex;flex-direction:column;align-items:center;gap:6px}
+.sq .box{padding:.18em .32em;border:2px dashed transparent;border-radius:10px;transition:background .3s,border-color .3s}
+.sq .tag{font-family:var(--ui);font-size:.8rem;font-weight:700;color:var(--muted);min-height:1.3em;opacity:0;transition:opacity .3s}
+.sq.ask .box{border-color:var(--accent);animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{50%{border-color:transparent}}
+.sq.a .box{border:2px solid var(--a);background:var(--a-soft)}
+.sq.b .box{border:2px solid var(--b);background:var(--b-soft)}
+.sq.a .tag,.sq.b .tag{opacity:1}
+.sq.a .tag{color:var(--a)}.sq.b .tag{color:var(--b)}
+.sq .tag .m{font-size:1.05rem}
+.found{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.chip{font-family:var(--math);font-size:1.3rem;padding:6px 14px;border-radius:10px;border:1.5px solid var(--line);color:var(--muted);min-width:140px;text-align:center}
+.chip.a{border-color:var(--a);background:var(--a-soft);color:var(--ink)}
+.chip.b{border-color:var(--b);background:var(--b-soft);color:var(--ink)}
+.chip .la{color:var(--a);font-style:italic;font-weight:600}
+.chip .lb{color:var(--b);font-style:italic;font-weight:600}
+.ident{font-family:var(--math);font-size:1.3rem;text-align:center;color:var(--muted);min-height:1.8em}
+.ident.on{color:var(--ink)}
+.ident .la{color:var(--a);font-style:italic}.ident .lb{color:var(--b);font-style:italic}
+.tpl{font-family:var(--math);font-size:1.6rem;display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:.15em;min-height:5.2rem;padding-top:6px}
+.tpl .br{padding-top:.1em;font-size:1.15em;line-height:1}
+.tpl .op{padding:.14em .2em 0}
+.tpl .br .sqb{display:none}
+.tpl.filled .br .rnd{display:none}
+.tpl.filled .br .sqb{display:inline}
+.slot{display:inline-flex;flex-direction:column;align-items:center;min-width:2.6em}
+.slot .val{border-bottom:2.5px dotted var(--muted);min-width:2.6em;min-height:1.45em;text-align:center;padding:0 .15em;white-space:nowrap}
+.slot .val > span{display:inline-block;opacity:0;transform:translateY(-26px) scale(.8);transition:opacity .5s ease,transform .5s ease}
+.slot .lab{font-size:1rem;font-style:italic;font-weight:600;margin-top:4px}
+.slot.a .lab{color:var(--a)}.slot.b .lab{color:var(--b)}
+.tpl.filled .slot .val > span{opacity:1;transform:none}
+.tpl.filled .slot.a .val > span{color:var(--a)}
+.tpl.filled .slot.b .val > span{color:var(--b)}
+.tpl.filled .slot.b .val > span{transition-delay:.35s}
+.tpl.filled .slot.a2 .val > span{transition-delay:.7s}
+.tpl.filled .slot.b2 .val > span{transition-delay:1.05s}
+.tpl.hidden{visibility:hidden}
+.note{font-size:.9rem;color:var(--muted);text-align:center;min-height:1.3em;margin:0}
+
+/* question */
+.stepline{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.85rem;color:var(--muted);font-weight:600;margin-bottom:10px}
+.dots{display:flex;gap:5px}
+.dots span{width:22px;height:5px;border-radius:3px;background:var(--line)}
+.dots span.on{background:var(--accent)}
+.q{font-size:1.2rem;font-weight:600;margin:0 0 14px;text-wrap:balance}
+.know{margin:0 0 12px;font-size:1rem;color:var(--muted)}
+.opts{display:flex;flex-wrap:wrap;gap:10px}
+.opt{font:inherit;font-family:var(--math);font-size:1.3rem;padding:9px 16px;border-radius:10px;border:1.5px solid var(--line);
+  background:var(--panel);color:var(--ink);cursor:pointer;transition:background .12s,border-color .12s}
+.opt:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+.opt:disabled{cursor:default}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--bad);opacity:.75}
+.opts.col{flex-direction:column;align-items:flex-start}
+.primary{font:inherit;font-weight:700;font-size:1.05rem;padding:11px 20px;border-radius:10px;border:1.5px solid var(--accent);
+  background:var(--accent);color:var(--panel);cursor:pointer}
+.ghost{font:inherit;font-size:.9rem;font-weight:600;background:none;border:none;color:var(--muted);cursor:pointer;padding:6px 4px;text-decoration:underline}
+.fb{margin-top:14px;padding:10px 14px;border-radius:10px;font-size:1rem}
+.fb.ok{background:var(--good-soft);color:var(--good)}
+.fb.ko{background:var(--bad-soft);color:var(--bad)}
+.endrow{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* rédaction */
+.lines{display:grid;grid-template-columns:auto auto 1fr;column-gap:.35em;align-items:center;font-family:var(--math);font-size:1.35rem;overflow-x:auto}
+.lines > div{min-height:2.9rem;display:block;line-height:2.9rem;white-space:nowrap}
+.lines .wait{grid-column:1 / -1;border-bottom:2px dashed var(--line);margin-right:20%;min-height:2.6rem}
+.new{animation:pop .45s ease-out}
+@keyframes pop{from{opacity:.15;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .new,.sq.ask .box{animation:none}
+  .slot .val > span,.sq .box,.sq .tag{transition:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Factoriser avec a² − b²</h1>
+    <nav class="tabs" id="tabs" aria-label="Choix de l’expression"></nav>
+  </header>
+  <div class="grid">
+    <section class="card" aria-label="Visualisation">
+      <h2>Je visualise</h2>
+      <div class="viz" id="viz"></div>
+    </section>
+    <div class="right">
+      <section class="card" id="question" aria-live="polite"></section>
+      <section class="card">
+        <h2>Ma rédaction</h2>
+        <div class="lines" id="lines"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Mini-notation : x en italique, ² en exposant, {n/d} fraction, « » grandes parenthèses, - devient − */
+function M(s){
+  return s.replace(/-/g,'−')
+          .replace(/x/g,'<span class="it">x</span>')
+          .replace(/²/g,'<sup>2</sup>')
+          .replace(/«/g,'<span class="bp">(</span>').replace(/»/g,'<span class="bp">)</span>')
+          .replace(/\{([^}/]+)\/([^}]+)\}/g,(_,n,d)=>`<span class="frac"><span>${n}</span><span>${d}</span></span>`);
+}
+
+const EX = [
+  { name:'A', sq1:'9x²', sq2:'(x + 4)²',
+    a:'3x', b:'x + 4', aIn:'3x', bIn:'(x + 4)',
+    sq1As:'(3x)²', sq2As:'(x + 4)²',
+    aOpts:['3x','9x','3x²','x'], bOpts:['x + 4','x - 4','x + 2','x² + 16'],
+    L2:'(3x)² - (x + 4)²',
+    L3:'[3x - (x + 4)][3x + (x + 4)]',
+    L4:['(3x - x - 4)(3x + x + 4)','(3x - x + 4)(3x + x + 4)','(3x - x - 4)(3x + x - 4)'],
+    L5:['(2x - 4)(4x + 4)','(2x + 4)(4x + 4)','(4x - 4)(2x + 4)'] },
+  { name:'B', sq1:'49', sq2:'(3x - 2)²',
+    a:'7', b:'3x - 2', aIn:'7', bIn:'(3x - 2)',
+    sq1As:'7²', sq2As:'(3x - 2)²',
+    aOpts:['49','7','24,5','14'], bOpts:['3x + 2','9x - 4','3x - 2','3x - 4'],
+    L2:'7² - (3x - 2)²',
+    L3:'[7 - (3x - 2)][7 + (3x - 2)]',
+    L4:['(7 - 3x + 2)(7 + 3x - 2)','(7 - 3x - 2)(7 + 3x - 2)','(7 - 3x + 2)(7 + 3x + 2)'],
+    L5:['(9 - 3x)(5 + 3x)','(5 - 3x)(5 + 3x)','(9 - 3x)(9 + 3x)'] },
+  { name:'C', sq1:'{16/25}', sq2:'«x + {1/5}»²',
+    a:'{4/5}', b:'x + {1/5}', aIn:'{4/5}', bIn:'«x + {1/5}»',
+    sq1As:'«{4/5}»²', sq2As:'«x + {1/5}»²',
+    aOpts:['{8/25}','{4/5}','{16/5}','{2/5}'], bOpts:['x + {1/25}','x - {1/5}','x + {1/5}','x + {2/5}'],
+    L2:'«{4/5}»² - «x + {1/5}»²',
+    L3:'[{4/5} - «x + {1/5}»][{4/5} + «x + {1/5}»]',
+    L4:['«{4/5} - x - {1/5}»«{4/5} + x + {1/5}»','«{4/5} - x + {1/5}»«{4/5} + x + {1/5}»','«{4/5} - x - {1/5}»«{4/5} + x - {1/5}»'],
+    L5:['«{3/5} - x»(1 + x)','(1 - x)(1 + x)','«{3/5} - x»«{3/5} + x»'] },
+  { name:'D', sq1:'9(x - 1)²', sq2:'4(x + 3)²',
+    a:'3(x - 1)', b:'2(x + 3)', aIn:'3(x - 1)', bIn:'2(x + 3)',
+    sq1As:'[3(x - 1)]²', sq2As:'[2(x + 3)]²',
+    aOpts:['9(x - 1)','3x - 1','3(x - 1)','3(x - 1)²'], bOpts:['2(x + 3)','4(x + 3)','2x + 3','2(x + 3)²'],
+    L2:'[3(x - 1)]² - [2(x + 3)]²',
+    L3:'[3(x - 1) - 2(x + 3)][3(x - 1) + 2(x + 3)]',
+    L4:['(3x - 3 - 2x - 6)(3x - 3 + 2x + 6)','(3x - 3 - 2x + 6)(3x - 3 + 2x + 6)','(3x - 1 - 2x - 3)(3x - 1 + 2x + 3)'],
+    L5:['(x - 9)(5x + 3)','(x - 3)(5x + 3)','(x - 9)(5x + 9)'] }
+];
+// ordre d'affichage des propositions (la bonne réponse est l'indice 0 de L4/L5)
+const ORD = [[1,0,2],[2,0,1],[0,2,1],[1,2,0]];
+const FORMS = {ok:'(a - b)(a + b)', sq:'(a - b)²', pp:'(a + b)(a + b)'};
+const FORM_ORD = [['sq','ok','pp'],['ok','pp','sq'],['pp','sq','ok'],['sq','pp','ok']];
+const NSTEPS = 5;
+const blank = () => ({step:0, wrong:[], msg:null, fresh:-1, animate:false});
+const state = EX.map(blank);
+let cur = 0;
+
+const la = '<span class="la">a</span>', lb = '<span class="lb">b</span>';
+const fm = s => M(s).replace(/(^|[^a-z])a(?=[^a-z]|$)/g,'$1'+la).replace(/(^|[^a-z])b(?=[^a-z]|$)/g,'$1'+lb);
+
+/* ---------- visualisation ---------- */
+function drawViz(e, s){
+  const c1 = s.step === 0 ? 'ask' : 'a';
+  const c2 = s.step === 1 ? 'ask' : s.step > 1 ? 'b' : '';
+  let h = `<div class="expr">
+      <span class="nm"><span class="it">${e.name}</span> =</span>
+      <span class="sq ${c1}"><span class="box">${M(e.sq1)}</span>
+        <span class="tag">${s.step>0 ? `<span class="m it">a</span><sup>2</sup><span class="m">${M(' = ' + e.sq1As)}</span>` : '&nbsp;'}</span></span>
+      <span class="op">−</span>
+      <span class="sq ${c2}"><span class="box">${M(e.sq2)}</span>
+        <span class="tag">${s.step>1 ? `<span class="m it">b</span><sup>2</sup><span class="m">${M(' = ' + e.sq2As)}</span>` : '&nbsp;'}</span></span>
+    </div>`;
+  h += `<div class="found">
+      <span class="chip ${s.step>0?'a':''}"><span class="la">a</span> = ${s.step>0 ? M(e.a) : '?'}</span>
+      <span class="chip ${s.step>1?'b':''}"><span class="lb">b</span> = ${s.step>1 ? M(e.b) : '?'}</span>
+    </div>`;
+  h += `<div class="ident ${s.step>=3?'on':''}">${s.step>=3 ? `${la}<sup>2</sup> − ${lb}<sup>2</sup> = (${la} − ${lb})(${la} + ${lb})` : (s.step===2 ? 'Je reconnais la forme a² − b²…' : '&nbsp;')}</div>`;
+  const slot = (cls, val, lab) => `<span class="slot ${cls}"><span class="val"><span>${M(val)}</span></span><span class="lab">${lab}</span></span>`;
+  const filledNow = s.step >= 3 && !s.animate;
+  h += `<div class="tpl ${s.step<3?'hidden':''} ${filledNow?'filled':''}" id="tpl" aria-label="Modèle (a − b)(a + b)">
+      <span class="br"><span class="rnd">(</span><span class="sqb">[</span></span>${slot('a', e.aIn, 'a')}<span class="op">−</span>${slot('b', e.bIn, 'b')}<span class="br"><span class="rnd">)</span><span class="sqb">]</span></span>
+      <span class="br"><span class="rnd">(</span><span class="sqb">[</span></span>${slot('a a2', e.aIn, 'a')}<span class="op">+</span>${slot('b b2', e.bIn, 'b')}<span class="br"><span class="rnd">)</span><span class="sqb">]</span></span>
+    </div>
+    <p class="note">${s.step>=3 ? 'Je remplace a et b. Les parenthèses deviennent des crochets.' : '&nbsp;'}</p>`;
+  return h;
+}
+
+/* ---------- rédaction ---------- */
+function drawLines(e, s){
+  const rows = [
+    {from:0, rhs:e.sq1 + ' - ' + e.sq2},
+    {from:2, rhs:e.L2},
+    {from:3, rhs:e.L3},
+    {from:4, rhs:e.L4[0]},
+    {from:5, rhs:e.L5[0]}
+  ];
+  return rows.map(r => {
+    if (s.step < r.from) return '<div class="wait" aria-hidden="true"></div>';
+    const nw = s.fresh === r.from ? ' new' : '';
+    return `<div class="${nw}"><span class="it">${e.name}</span></div><div class="${nw}">=</div><div class="${nw}">${M(r.rhs)}</div>`;
+  }).join('');
+}
+
+/* ---------- questions ---------- */
+function question(e, s){
+  const i = cur;
+  const btn = (val, label) =>
+    `<button type="button" class="opt${s.wrong.includes(val)?' wrong':''}" data-val="${val}" ${s.wrong.includes(val)?'disabled':''}>${label}</button>`;
+  let h = `<div class="stepline"><span>${s.step < NSTEPS ? `Étape ${s.step+1} sur ${NSTEPS}` : 'Terminé'}</span>
+    <span class="dots" aria-hidden="true">${Array.from({length:NSTEPS},(_,k)=>`<span class="${k<s.step?'on':''}"></span>`).join('')}</span></div>`;
+  if (s.step === 0){
+    h += `<p class="q">Le premier carré est <span class="m">${M(e.sq1)}</span>. C’est le carré de quel nombre <span class="m it">a</span> ?</p>
+      <div class="opts">${e.aOpts.map(o => btn(o, M(o))).join('')}</div>`;
+  } else if (s.step === 1){
+    h += `<p class="q">Le second carré est <span class="m">${M(e.sq2)}</span>. C’est le carré de quel nombre <span class="m it">b</span> ?</p>
+      <div class="opts">${e.bOpts.map(o => btn(o, M(o))).join('')}</div>`;
+  } else if (s.step === 2){
+    h += `<p class="know">L’expression est de la forme <span class="m">${fm('a² - b²')}</span>.</p>
+      <p class="q">Quelle est la forme factorisée de <span class="m">${fm('a² - b²')}</span> ?</p>
+      <div class="opts">${FORM_ORD[i].map(k => btn(k, fm(FORMS[k]))).join('')}</div>`;
+  } else if (s.step === 3){
+    h += `<p class="know">Je supprime les parenthèses à l’intérieur de chaque crochet.</p>
+      <p class="q">Quelle ligne est juste ?</p>
+      <div class="opts col">${ORD[i].map(k => btn('L4_'+k, `<span class="it">${e.name}</span> = ${M(e.L4[k])}`)).join('')}</div>`;
+  } else if (s.step === 4){
+    h += `<p class="know">Je réduis chaque facteur.</p>
+      <p class="q">Quelle est la forme factorisée de <span class="m it">${e.name}</span> ?</p>
+      <div class="opts col">${ORD[(i+2)%4].map(k => btn('L5_'+k, `<span class="it">${e.name}</span> = ${M(e.L5[k])}`)).join('')}</div>`;
+  } else {
+    const last = cur === EX.length-1;
+    h += `<p class="q">Expression factorisée : <span class="m"><span class="it">${e.name}</span> = ${M(e.L5[0])}</span></p>
+      <div class="endrow">
+        <button type="button" class="primary" id="next">${last ? 'Revenir à l’expression A' : 'Expression suivante'}</button>
+        <button type="button" class="ghost" id="redo">Refaire cette expression</button>
+      </div>`;
+  }
+  if (s.msg) h += `<div class="fb ${s.msg.ok?'ok':'ko'}">${s.msg.text}</div>`;
+  if (s.step > 0 && s.step < NSTEPS) h += `<div style="margin-top:8px"><button type="button" class="ghost" id="redo">Recommencer cette expression</button></div>`;
+  return h;
+}
+
+/* ---------- vérification ---------- */
+function check(val){
+  const e = EX[cur], s = state[cur];
+  let ok = false, text = '';
+  if (s.step === 0){
+    ok = val === e.a;
+    text = ok ? `Oui : <span class="m">${M(e.sq1)} = ${M(e.sq1As)}</span>, donc <span class="m it">a</span> = <span class="m">${M(e.a)}</span>.`
+              : `Élève ta réponse au carré : tu dois retrouver exactement <span class="m">${M(e.sq1)}</span>.`;
+  } else if (s.step === 1){
+    ok = val === e.b;
+    text = ok ? `Oui : <span class="m">${M(e.sq2)} = ${M(e.sq2As)}</span>, donc <span class="m it">b</span> = <span class="m">${M(e.b)}</span>.`
+              : `Élève ta réponse au carré : tu dois retrouver exactement <span class="m">${M(e.sq2)}</span>.`;
+  } else if (s.step === 2){
+    ok = val === 'ok';
+    text = ok ? `Oui : <span class="m">${fm('a² - b² = (a - b)(a + b)')}</span>. Je remplace <span class="m it">a</span> et <span class="m it">b</span>.`
+              : 'Ce sont les autres identités remarquables. Ici, on a une différence de deux carrés.';
+  } else if (s.step === 3){
+    ok = val === 'L4_0';
+    text = ok ? 'Oui, les signes sont bien gérés.'
+              : 'Un signe − devant une parenthèse change tous les signes à l’intérieur. Un nombre devant une parenthèse multiplie chaque terme.';
+  } else if (s.step === 4){
+    ok = val === 'L5_0';
+    text = ok ? 'Exact.' : 'Dans chaque facteur, regroupe les termes en x entre eux et les nombres entre eux.';
+  }
+  if (ok){ s.step++; s.wrong = []; s.msg = {ok:true, text}; s.fresh = s.step; s.animate = (s.step === 3); }
+  else { s.wrong.push(val); s.msg = {ok:false, text}; s.fresh = -1; }
+  render();
+}
+
+/* ---------- rendu ---------- */
+function render(){
+  const e = EX[cur], s = state[cur];
+  document.getElementById('tabs').innerHTML = EX.map((x,i) =>
+    `<button type="button" class="tab${state[i].step>=NSTEPS?' done':''}" data-i="${i}" aria-current="${i===cur}">${state[i].step>=NSTEPS?'✓ ':''}Expression <span class="m">${x.name}</span></button>`).join('');
+  document.getElementById('viz').innerHTML = drawViz(e, s);
+  document.getElementById('lines').innerHTML = drawLines(e, s);
+  const q = document.getElementById('question');
+  q.innerHTML = question(e, s);
+  if (s.animate){
+    s.animate = false;
+    const tpl = document.getElementById('tpl');
+    requestAnimationFrame(() => setTimeout(() => tpl.classList.add('filled'), 350));
+  }
+  s.fresh = -1;
+  q.querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => check(b.dataset.val)));
+  const redo = document.getElementById('redo');
+  if (redo) redo.addEventListener('click', () => { state[cur] = blank(); render(); });
+  const next = document.getElementById('next');
+  if (next) next.addEventListener('click', () => { cur = (cur+1) % EX.length; state[cur].msg = null; render(); });
+}
+document.getElementById('tabs').addEventListener('click', ev => {
+  const b = ev.target.closest('.tab'); if (!b) return;
+  cur = +b.dataset.i; state[cur].msg = null; render();
+});
+render();
+</script>
+</body>
+</html>
